@@ -1,22 +1,22 @@
 import React from "react";
 import { Routes, Route, useParams } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
-import RequestForm from "./components/RequestForm";
-import SitterForm from "./components/SitterForm";
-import BrowseProviders from "./components/BrowseProviders";
-import BookingPage from "./components/BookingPage";
-import Login from "./components/pages/Login";
-import Signup from "./components/pages/Signup";
-import Dashboard from "./components/pages/Dashboard"; 
-import SitterProfile from "./components/SitterProfile";
-import SitterRequests from "./components/SitterRequests"; 
+import Navbar from "./Components/Navbar";
+import Hero from "./Components/Hero";
+import RequestForm from "./Components/RequestForm";
+import SitterForm from "./Components/SitterForm";
+import BrowseProviders from "./Components/BrowseProviders";
+import BookingPage from "./Components/BookingPage";
+import Login from "./Components/pages/Login";
+import Signup from "./Components/pages/Signup";
+import Dashboard from "./Components/pages/Dashboard"; 
+import SitterProfile from "./Components/SitterProfile";
+import SitterRequests from "./Components/SitterRequests"; 
 
 // Admin imports (standalone pages)
-import AdminBookings from "./components/Admin/Bookings";
-import AdminProviders from "./components/Admin/Providers";
-import AdminRequests from "./components/Admin/Requests";
-import AdminUsers from "./components/Admin/Users";
+import AdminBookings from "./Components/Admin/Bookings";
+import AdminProviders from "./Components/Admin/Providers";
+import AdminRequests from "./Components/Admin/Requests";
+import AdminUsers from "./Components/Admin/Users";
 
 const App = () => {
   // Wrapper to pass providerId from URL param to SitterRequests
