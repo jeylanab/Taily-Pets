@@ -4,7 +4,7 @@ import { doc, setDoc, serverTimestamp, collection, addDoc } from "firebase/fires
 import { auth, db } from "../../Service/firebase";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaArrowRight, FaArrowLeft, FaCheck } from "react-icons/fa";
+import { FaArrowRight, FaArrowLeft, FaCheck, FaUser, FaEnvelope, FaLock, FaDog, FaMapMarkerAlt, FaPhone, FaInfoCircle, FaCamera } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
@@ -39,7 +39,8 @@ export default function Signup() {
   const UPLOAD_PRESET = "Providers";
 
   const serviceOptions = ["Dog Walking", "Pet Sitting", "Pet Boarding"];
-  const petTypeOptions = ["Dog", "Cat", "Bird", "Other"];
+  const petTypeOptions = ["Dog", "Cat", "Bird", "Rabbit"];
+  const areaOptions = ["Nicosia", "Larnaca", "Limassol", "Paphos", "Famagusta"];
   const petSizeOptions = ["Small", "Medium", "Large"];
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -57,11 +58,9 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      // Create Firebase user
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Save base user
       await setDoc(doc(db, "users", user.uid), {
         email: user.email,
         role,
@@ -69,14 +68,12 @@ export default function Signup() {
         createdAt: serverTimestamp(),
       });
 
-      // If sitter → upload photo + profile
       if (role === "sitter") {
         if (!photo) {
           setLoading(false);
           return alert("Please upload a profile photo!");
         }
 
-        // Upload photo to Cloudinary
         const formData = new FormData();
         formData.append("file", photo);
         formData.append("upload_preset", UPLOAD_PRESET);
@@ -86,7 +83,6 @@ export default function Signup() {
         );
         const photoURL = cloudinaryRes.data.secure_url;
 
-        // Save sitter profile
         const providerRef = await addDoc(collection(db, "Providers"), {
           userId: user.uid,
           name,
@@ -107,7 +103,6 @@ export default function Signup() {
           createdAt: serverTimestamp(),
         });
 
-        // Update user doc
         await setDoc(
           doc(db, "users", user.uid),
           { sitterProfileCompleted: true, providerId: providerRef.id },
@@ -125,111 +120,137 @@ export default function Signup() {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="mx-auto p-6 bg-white rounded-xl shadow-lg max-w-2xl space-y-6"
-    >
-      {/* Step 1: Account Info */}
-      {step === 1 && (
-        <motion.div initial={{x:50, opacity:0}} animate={{x:0, opacity:1}} transition={{duration:0.5}}>
-          <h2 className="text-xl font-semibold mb-4">Account Info</h2>
-          <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} required className="w-full border p-2 rounded mb-2"/>
-          <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} required className="w-full border p-2 rounded mb-2"/>
-          <select value={role} onChange={e=>setRole(e.target.value)} className="border p-2 rounded mb-2">
-            <option value="user">User</option>
-            <option value="sitter">Sitter</option>
-          </select>
-          <button type="button" onClick={handleNext} className="bg-orange-500 text-white py-2 px-4 rounded hover:bg-orange-600">
-            Next <FaArrowRight className="inline ml-2"/>
-          </button>
-        </motion.div>
-      )}
-
-      {/* Step 2-5 for Sitters */}
-      {role === "sitter" && step === 2 && (
-        <motion.div initial={{x:50, opacity:0}} animate={{x:0, opacity:1}} transition={{duration:0.5}}>
-          <h2 className="text-xl font-semibold mb-2">Personal Info</h2>
-          <input type="text" placeholder="Full Name" value={name} onChange={e=>setName(e.target.value)} required className="w-full border p-2 rounded mb-2"/>
-          <input type="tel" placeholder="Phone" value={phone} onChange={e=>setPhone(e.target.value)} required className="w-full border p-2 rounded mb-2"/>
-          <textarea placeholder="Short Bio" value={bio} onChange={e=>setBio(e.target.value)} className="w-full border p-2 rounded mb-2" rows={3}></textarea>
-          <div className="flex justify-between">
-            <button type="button" onClick={handleBack} className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"><FaArrowLeft className="inline mr-2"/> Back</button>
-            <button type="button" onClick={handleNext} className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">Next <FaArrowRight className="inline ml-2"/></button>
-          </div>
-        </motion.div>
-      )}
-
-      {role === "sitter" && step === 3 && (
-        <motion.div initial={{x:50, opacity:0}} animate={{x:0, opacity:1}} transition={{duration:0.5}}>
-          <h2 className="text-xl font-semibold mb-2">Service Info</h2>
-          <select value={serviceType} onChange={e=>setServiceType(e.target.value)} required className="w-full border p-2 rounded mb-2">
-            <option value="">Select Service</option>
-            {serviceOptions.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <select value={petType} onChange={e=>setPetType(e.target.value)} className="w-full border p-2 rounded mb-2">
-            <option value="">Select Pet Type</option>
-            {petTypeOptions.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
-          <select value={petSize} onChange={e=>setPetSize(e.target.value)} className="w-full border p-2 rounded mb-2">
-            <option value="">Select Pet Size</option>
-            {petSizeOptions.map(p => <option key={p} value={p}>{p}</option>)}
-          </select>
-          <input type="text" placeholder="Area" value={area} onChange={e=>setArea(e.target.value)} required className="w-full border p-2 rounded mb-2"/>
-          <label className="flex items-center space-x-2 mb-2">
-            <input type="checkbox" checked={plantWatering} onChange={e=>setPlantWatering(e.target.checked)} className="w-4 h-4"/>
-            <span>Offer Plant Watering</span>
-          </label>
-          <div className="flex justify-between">
-            <button type="button" onClick={handleBack} className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"><FaArrowLeft className="inline mr-2"/> Back</button>
-            <button type="button" onClick={handleNext} className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">Next <FaArrowRight className="inline ml-2"/></button>
-          </div>
-        </motion.div>
-      )}
-
-      {role === "sitter" && step === 4 && (
-        <motion.div initial={{x:50, opacity:0}} animate={{x:0, opacity:1}} transition={{duration:0.5}}>
-          <h2 className="text-xl font-semibold mb-2">Availability & Rates</h2>
-          <div className="mb-2">
-            <span className="font-medium block">Recurring Days:</span>
-            <div className="flex space-x-2">
-              {weekdays.map(day => (
-                <button type="button" key={day} onClick={()=>toggleDay(day)} className={`px-3 py-1 rounded ${availabilityDays.includes(day) ? "bg-orange-500 text-white" : "bg-gray-200 text-gray-700"}`}>{day}</button>
-              ))}
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <motion.form
+        onSubmit={handleSubmit}
+        className="w-full max-w-2xl p-8 bg-white rounded-2xl shadow-xl space-y-6"
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        {/* Step 1: Account Info */}
+        {step === 1 && (
+          <motion.div initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2"><FaUser /> Account Info</h2>
+            <div className="space-y-3">
+              <div className="flex items-center border rounded-lg px-3 py-2">
+                <FaEnvelope className="text-gray-500 mr-2" />
+                <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} required className="w-full outline-none"/>
+              </div>
+              <div className="flex items-center border rounded-lg px-3 py-2">
+                <FaLock className="text-gray-500 mr-2" />
+                <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} required className="w-full outline-none"/>
+              </div>
+              <select value={role} onChange={e=>setRole(e.target.value)} className="w-full border p-2 rounded">
+                <option value="user">User</option>
+                <option value="sitter">Sitter</option>
+              </select>
             </div>
-          </div>
-          <div className="mb-2">
-            <span className="font-medium block">Specific Dates:</span>
-            <DayPicker mode="multiple" selected={availabilityDates} onSelect={setAvailabilityDates} numberOfMonths={2} className="border rounded p-2"/>
-          </div>
-          <input type="text" placeholder="Rate (e.g., $15/hour)" value={rate} onChange={e=>setRate(e.target.value)} className="w-full border p-2 rounded mb-2"/>
-          <div className="flex justify-between">
-            <button type="button" onClick={handleBack} className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"><FaArrowLeft className="inline mr-2"/> Back</button>
-            <button type="button" onClick={handleNext} className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">Next <FaArrowRight className="inline ml-2"/></button>
-          </div>
-        </motion.div>
-      )}
-
-      {role === "sitter" && step === 5 && (
-        <motion.div initial={{x:50, opacity:0}} animate={{x:0, opacity:1}} transition={{duration:0.5}}>
-          <h2 className="text-xl font-semibold mb-2">Profile Photo</h2>
-          <input type="file" accept="image/*" onChange={e=>setPhoto(e.target.files[0])} required className="mb-4"/>
-          <div className="flex justify-between">
-            <button type="button" onClick={handleBack} className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"><FaArrowLeft className="inline mr-2"/> Back</button>
-            <button type="submit" disabled={loading} className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">
-              {loading ? "Submitting..." : "Submit"} <FaCheck className="inline ml-2"/>
+            <button type="button" onClick={handleNext} className="mt-4 w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 flex items-center justify-center">
+              Next <FaArrowRight className="ml-2" />
             </button>
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
 
-      {/* Step 2 for normal users */}
-      {role === "user" && step === 2 && (
-        <div>
-          <button type="submit" disabled={loading} className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">
-            {loading ? "Signing up..." : "Signup"}
-          </button>
-        </div>
-      )}
-    </form>
+        {/* Step 2: Personal Info */}
+        {role === "sitter" && step === 2 && (
+          <motion.div initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2"><FaUser /> Personal Info</h2>
+            <div className="space-y-3">
+              <input type="text" placeholder="Full Name" value={name} onChange={e=>setName(e.target.value)} required className="w-full border p-2 rounded"/>
+              <div className="flex items-center border rounded-lg px-3 py-2">
+                <FaPhone className="text-gray-500 mr-2" />
+                <input type="tel" placeholder="Phone" value={phone} onChange={e=>setPhone(e.target.value)} required className="w-full outline-none"/>
+              </div>
+              <textarea placeholder="Short Bio" value={bio} onChange={e=>setBio(e.target.value)} className="w-full border p-2 rounded" rows={3}></textarea>
+            </div>
+            <div className="flex justify-between mt-4">
+              <button type="button" onClick={handleBack} className="bg-gray-300 text-gray-700 px-4 py-2 rounded"><FaArrowLeft className="inline mr-2"/> Back</button>
+              <button type="button" onClick={handleNext} className="bg-orange-500 text-white px-4 py-2 rounded">Next <FaArrowRight className="inline ml-2"/></button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 3: Service Info */}
+        {role === "sitter" && step === 3 && (
+          <motion.div initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2"><FaDog /> Service Info</h2>
+            <div className="space-y-3">
+              <select value={serviceType} onChange={e=>setServiceType(e.target.value)} required className="w-full border p-2 rounded">
+                <option value="">Select Service</option>
+                {serviceOptions.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <select value={petType} onChange={e=>setPetType(e.target.value)} className="w-full border p-2 rounded">
+                <option value="">Select Pet Type</option>
+                {petTypeOptions.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+              <select value={petSize} onChange={e=>setPetSize(e.target.value)} className="w-full border p-2 rounded">
+                <option value="">Select Pet Size</option>
+                {petSizeOptions.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+              <select value={area} onChange={e=>setArea(e.target.value)} required className="w-full border p-2 rounded">
+                <option value="">Select Area</option>
+                {areaOptions.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+              <label className="flex items-center space-x-2">
+                <input type="checkbox" checked={plantWatering} onChange={e=>setPlantWatering(e.target.checked)} className="w-4 h-4"/>
+                <span>Offer Plant Watering</span>
+              </label>
+            </div>
+            <div className="flex justify-between mt-4">
+              <button type="button" onClick={handleBack} className="bg-gray-300 text-gray-700 px-4 py-2 rounded"><FaArrowLeft className="inline mr-2"/> Back</button>
+              <button type="button" onClick={handleNext} className="bg-orange-500 text-white px-4 py-2 rounded">Next <FaArrowRight className="inline ml-2"/></button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 4: Availability & Rates */}
+        {role === "sitter" && step === 4 && (
+          <motion.div initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2"><FaInfoCircle /> Availability & Rates</h2>
+            <div className="mb-2">
+              <span className="font-medium block">Recurring Days:</span>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {weekdays.map(day => (
+                  <button type="button" key={day} onClick={()=>toggleDay(day)} className={`px-3 py-1 rounded ${availabilityDays.includes(day) ? "bg-orange-500 text-white" : "bg-gray-200 text-gray-700"}`}>{day}</button>
+                ))}
+              </div>
+            </div>
+            <div className="mb-2">
+              <span className="font-medium block">Specific Dates:</span>
+              <DayPicker mode="multiple" selected={availabilityDates} onSelect={setAvailabilityDates} numberOfMonths={2} className="border rounded p-2"/>
+            </div>
+            <input type="text" placeholder="Rate (e.g., $15/hour)" value={rate} onChange={e=>setRate(e.target.value)} className="w-full border p-2 rounded"/>
+            <div className="flex justify-between mt-4">
+              <button type="button" onClick={handleBack} className="bg-gray-300 text-gray-700 px-4 py-2 rounded"><FaArrowLeft className="inline mr-2"/> Back</button>
+              <button type="button" onClick={handleNext} className="bg-orange-500 text-white px-4 py-2 rounded">Next <FaArrowRight className="inline ml-2"/></button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 5: Photo Upload */}
+        {role === "sitter" && step === 5 && (
+          <motion.div initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2"><FaCamera /> Profile Photo</h2>
+            <input type="file" accept="image/*" onChange={e=>setPhoto(e.target.files[0])} required className="mb-4"/>
+            <div className="flex justify-between">
+              <button type="button" onClick={handleBack} className="bg-gray-300 text-gray-700 px-4 py-2 rounded"><FaArrowLeft className="inline mr-2"/> Back</button>
+              <button type="submit" disabled={loading} className="bg-orange-500 text-white px-4 py-2 rounded flex items-center justify-center">
+                {loading ? "Submitting..." : "Submit"} <FaCheck className="ml-2"/>
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 2 for normal users */}
+        {role === "user" && step === 2 && (
+          <motion.div initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
+            <button type="submit" disabled={loading} className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600">
+              {loading ? "Signing up..." : "Signup"}
+            </button>
+          </motion.div>
+        )}
+      </motion.form>
+    </div>
   );
 }

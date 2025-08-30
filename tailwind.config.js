@@ -6,6 +6,7 @@ module.exports = {
 
   theme: {
     extend: {
+      
       keyframes: {
         typing: {
           "0%": { width: "0%", visibility: "hidden" },

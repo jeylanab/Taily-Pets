@@ -1,8 +1,10 @@
+/* Import Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700&display=swap');
+
+/* Tailwind Directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import custom font */
 
 /* RESET + GLOBAL */
 * {
@@ -13,31 +15,42 @@
 
 :root {
   --primary-color: #fbf9f6f5;
-  --secondary-color: rgba(0, 0, 0, 0.98);
+  --secondary-color: rgba(21, 21, 21, 0.98);
   --tertiary-color: #62e847;
   --other-color: #0d0d0d;
-  --primary-font-family: 'Montserrat', sans-serif;
+  --primary-font-family: 'Baloo 2', cursive;
   --spacing-unit: 1rem;
   --border-radius: 8px;
-  --background-image: url("data:image/svg+xml,%3Csvg ... (your full image stays)%3C/svg%3E");
+  --background-image: url("data:image/svg+xml,%3Csvg ... %3C/svg%3E");
 }
-
 
 body {
   background: linear-gradient(
     135deg,
-    #ffffff 0%,       /* base white */
-    rgba(255, 165, 0, 0.05) 50%,  /* super light orange tint (5% opacity) */
+    #ffffff 0%,                   
+    rgba(255, 165, 0, 0.05) 50%,  
     #ffffff 100%
   );
   background-attachment: fixed;
   animation: softShift 30s ease infinite;
   font-family: var(--primary-font-family);
+  color: var(--secondary-color);
+  line-height: 1.6;
 }
 
-/* Very slow, almost invisible shift */
+/* Very slow, subtle background shift */
 @keyframes softShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
+}
+
+/* Headings using playful font */
+h1, h2, h3, h4, h5, h6, span {
+  font-family: var(--primary-font-family);
+}
+
+/* ... rest of your CSS stays the same ... */
+input,textarea, Link, a {
+  font-family: var(--primary-font-family);
 }
