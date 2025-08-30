@@ -183,7 +183,7 @@ export default function BrowseProviders() {
 
                   <button
                     onClick={() => navigate(`/book/${p.id}`)}
-                    className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600 transition"
+                    className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-black text-white text-sm font-semibold transition"
                   >
                     <Calendar size={16} /> See Slots
                   </button>

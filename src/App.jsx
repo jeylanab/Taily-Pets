@@ -11,6 +11,7 @@ import Signup from "./Components/pages/Signup";
 import Dashboard from "./Components/pages/Dashboard"; 
 import SitterProfile from "./Components/SitterProfile";
 import SitterRequests from "./Components/SitterRequests"; 
+import Footer from "./Components/Footer";
 
 // Admin imports (standalone pages)
 import AdminBookings from "./Components/Admin/Bookings";
@@ -56,6 +57,7 @@ const App = () => {
           <Route path="/admin/users" element={<AdminUsers />} />
         </Routes>
       </div>
+      <Footer />
     </>
   );
 };
