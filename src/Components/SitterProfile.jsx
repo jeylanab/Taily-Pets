@@ -4,7 +4,7 @@ import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { firestore } from "../Service/firebase";
 import DatePicker, { DateObject } from "react-multi-date-picker";
 import { FaPhone, FaPaw, FaMapMarkerAlt, FaEnvelope } from "react-icons/fa";
-
+// added
 const areas = ["Nicosia", "Limassol", "Larnaca", "Paphos", "Famagusta"];
 const serviceTypes = ["Dog Walking", "Pet Sitting", "Pet Grooming", "Pet Boarding"];
 const petTypes = ["Dog", "Cat", "Bird", "Other"];
