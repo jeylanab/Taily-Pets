@@ -1,5 +1,5 @@
 // src/components/Dashboard.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   collection,
   query,
@@ -10,6 +10,8 @@ import {
   addDoc,
   serverTimestamp,
   getDoc,
+  orderBy,
+  onSnapshot,
 } from "firebase/firestore";
 import { auth, firestore } from "../../Service/firebase";
 import {
@@ -22,12 +24,17 @@ import {
   FaTimesCircle,
   FaStar,
   FaListUl,
+  FaCommentDots,
 } from "react-icons/fa";
 
 export default function Dashboard() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState("user");
+  const [activeChat, setActiveChat] = useState(null); // bookingId of active chat
+  const [messages, setMessages] = useState([]); // messages for active chat
+  const [newMsg, setNewMsg] = useState("");
+  const bottomRef = useRef();
 
   // Fetch user role
   useEffect(() => {
@@ -98,6 +105,21 @@ export default function Dashboard() {
     fetchBookings();
   }, [userRole]);
 
+  // Fetch chat messages in real-time when activeChat changes
+  useEffect(() => {
+    if (!activeChat) return;
+
+    const messagesRef = collection(firestore, "Chats", activeChat, "messages");
+    const q = query(messagesRef, orderBy("timestamp", "asc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    });
+
+    return () => unsubscribe();
+  }, [activeChat]);
+
   const isBookingCompletable = (booking) => {
     const now = new Date();
     const toDate = booking.toDate?.toDate
@@ -114,9 +136,7 @@ export default function Dashboard() {
 
       setBookings((prev) =>
         prev.map((b) =>
-          b.id === bookingId
-            ? { ...b, status: newStatus, showReview: newStatus === "Completed" }
-            : b
+          b.id === bookingId ? { ...b, status: newStatus, showReview: newStatus === "Completed" } : b
         )
       );
     } catch (err) {
@@ -148,6 +168,29 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Error submitting review:", err);
     }
+  };
+
+  const sendMessage = async (booking) => {
+    if (!newMsg.trim()) return;
+
+    // Create chat document if doesn't exist
+    const chatRef = doc(firestore, "Chats", booking.id);
+    const chatSnap = await getDoc(chatRef);
+    if (!chatSnap.exists()) {
+      await addDoc(collection(firestore, "Chats"), {
+        id: booking.id,
+        participants: [booking.userId, booking.providerId],
+      });
+    }
+
+    await addDoc(collection(firestore, "Chats", booking.id, "messages"), {
+      senderId: auth.currentUser.uid,
+      text: newMsg,
+      timestamp: serverTimestamp(),
+      readBy: [auth.currentUser.uid],
+    });
+
+    setNewMsg("");
   };
 
   if (loading) {
@@ -261,7 +304,54 @@ export default function Dashboard() {
                     <FaCheckCircle /> Complete
                   </button>
                 )}
+
+              {/* Chat toggle button */}
+              {(b.status === "Accepted" || b.status === "Completed") && (
+                <button
+                  onClick={() =>
+                    setActiveChat(activeChat === b.id ? null : b.id)
+                  }
+                  className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition font-semibold"
+                >
+                  <FaCommentDots /> Chat
+                </button>
+              )}
             </div>
+
+            {/* Chat Room */}
+            {activeChat === b.id && (
+              <div className="mt-4 p-3 border-t border-gray-200 flex flex-col h-64">
+                <div className="flex-1 overflow-y-auto space-y-2 mb-2">
+                  {messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`p-2 rounded max-w-xs ${
+                        msg.senderId === auth.currentUser.uid
+                          ? "bg-blue-100 self-end"
+                          : "bg-gray-200 self-start"
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
+                  ))}
+                  <div ref={bottomRef} />
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    value={newMsg}
+                    onChange={(e) => setNewMsg(e.target.value)}
+                    className="flex-1 p-2 border rounded"
+                    placeholder="Type a message..."
+                  />
+                  <button
+                    onClick={() => sendMessage(b)}
+                    className="px-4 py-2 bg-green-500 text-white rounded"
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Review Form */}
             {b.showReview && (

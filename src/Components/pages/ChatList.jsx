@@ -1,42 +1,40 @@
-import { useEffect, useState } from "react";
-import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
-import { firestore } from "../../Service/firebase";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { auth, firestore } from "../../Service/firebase";
 
-export default function ChatList({ currentUser }) {
-  const [bookings, setBookings] = useState([]);
-  const navigate = useNavigate();
+export default function ChatList({ onSelectChat }) {
+  const [chats, setChats] = useState([]);
 
   useEffect(() => {
-    const field = currentUser.role === "user" ? "userId" : "sitterId";
-    const q = query(
-      collection(firestore, "bookings"),
-      where(field, "==", currentUser.uid),
-      orderBy("createdAt", "desc")
-    );
+    const fetchChats = async () => {
+      if (!auth.currentUser) return;
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setBookings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+      const q = query(
+        collection(firestore, "Chats"),
+        where("participants", "array-contains", auth.currentUser.uid)
+      );
+      const snapshot = await getDocs(q);
+      const chatData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setChats(chatData);
+    };
 
-    return () => unsubscribe();
-  }, [currentUser.uid, currentUser.role]);
+    fetchChats();
+  }, []);
 
   return (
     <div className="space-y-2">
-      {bookings.map((b) => {
-        const otherUserId = currentUser.role === "user" ? b.sitterId : b.userId;
-        return (
-          <div
-            key={b.id}
-            className="border p-3 rounded cursor-pointer hover:bg-gray-100"
-            onClick={() => navigate(`/chat/${b.id}`)}
-          >
-            <p className="font-medium">Chat with: {otherUserId}</p>
-            <p className="text-sm text-gray-500">Booking Status: {b.status}</p>
-          </div>
-        );
-      })}
+      {chats.map((chat) => (
+        <div
+          key={chat.id}
+          className="p-3 border rounded cursor-pointer hover:bg-gray-100"
+          onClick={() => onSelectChat(chat.id, chat.participants)}
+        >
+          Chat with {chat.participants.filter(id => id !== auth.currentUser.uid)[0]}
+        </div>
+      ))}
     </div>
   );
 }
