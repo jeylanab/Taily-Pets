@@ -169,7 +169,7 @@ export default function SitterRequests({ providerId }) {
                 onClick={() =>
                   setActiveChat(activeChat === req.id ? null : req.id)
                 }
-                className="flex items-center gap-2 px-5 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold"
+                className="flex items-center gap-2 px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition font-semibold"
               >
                 <FaCommentDots /> Chat
               </button>

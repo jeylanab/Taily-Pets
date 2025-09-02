@@ -345,7 +345,7 @@ export default function Dashboard() {
                   />
                   <button
                     onClick={() => sendMessage(b)}
-                    className="px-4 py-2 bg-green-500 text-white rounded"
+                    className="px-4 py-2 bg-orange-500 text-white rounded"
                   >
                     Send
                   </button>

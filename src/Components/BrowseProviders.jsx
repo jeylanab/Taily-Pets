@@ -25,10 +25,26 @@ export default function BrowseProviders() {
   const fetchProviders = async () => {
     setLoading(true);
     try {
+      // Fetch approved providers
       const q = query(collection(firestore, "Providers"), where("approved", "==", true));
       const snapshot = await getDocs(q);
       let data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
+      // Fetch all reviews
+      const reviewsSnapshot = await getDocs(collection(firestore, "Reviews"));
+      const reviews = reviewsSnapshot.docs.map((doc) => doc.data());
+
+      // Calculate average rating for each provider
+      data = data.map((provider) => {
+        const providerReviews = reviews.filter((r) => r.providerId === provider.id);
+        const avgRating =
+          providerReviews.length > 0
+            ? providerReviews.reduce((acc, r) => acc + r.rating, 0) / providerReviews.length
+            : 0;
+        return { ...provider, averageRating: avgRating };
+      });
+
+      // Apply filters
       if (search) {
         data = data.filter(
           (p) =>
@@ -67,6 +83,7 @@ export default function BrowseProviders() {
 
   useEffect(() => {
     fetchProviders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, filterArea, filterService, filterPetType, filterDate]);
 
   return (
@@ -183,7 +200,7 @@ export default function BrowseProviders() {
                       />
                     ))}
                     <span className="text-sm font-medium text-gray-600 ml-2">
-                      {p.averageRating?.toFixed(1) || "0.0"} ({p.reviewsCount || 0} reviews)
+                      {p.averageRating?.toFixed(1) || "0.0"}
                     </span>
                   </div>
 

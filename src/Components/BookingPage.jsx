@@ -1,7 +1,7 @@
 // src/pages/BookingPage.jsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { firestore } from "../Service/firebase";
 import { Star, MapPin, PawPrint, Clock, Info } from "lucide-react";
 
@@ -10,6 +10,7 @@ export default function BookingPage() {
   const navigate = useNavigate();
 
   const [provider, setProvider] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [loadingProvider, setLoadingProvider] = useState(true);
   const [showAllDetails, setShowAllDetails] = useState(false);
 
@@ -17,10 +18,33 @@ export default function BookingPage() {
     const fetchProvider = async () => {
       setLoadingProvider(true);
       try {
+        // Fetch provider
         const docRef = doc(firestore, "Providers", id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setProvider({ id: docSnap.id, ...docSnap.data() });
+          const providerData = { id: docSnap.id, ...docSnap.data() };
+          setProvider(providerData);
+
+          // Fetch reviews for this provider
+          const reviewsQuery = query(
+            collection(firestore, "Reviews"),
+            where("providerId", "==", id)
+          );
+          const reviewsSnapshot = await getDocs(reviewsQuery);
+          const reviewsData = reviewsSnapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+          setReviews(reviewsData);
+
+          // Calculate average rating
+          if (reviewsData.length > 0) {
+            const avgRating =
+              reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length;
+            providerData.averageRating = avgRating;
+            providerData.reviewsCount = reviewsData.length;
+          } else {
+            providerData.averageRating = 0;
+            providerData.reviewsCount = 0;
+          }
+          setProvider({ ...providerData });
         } else {
           alert("❌ Sitter not found.");
           navigate("/sitters");
@@ -55,7 +79,6 @@ export default function BookingPage() {
             <p className="text-gray-600">{provider.bio}</p>
 
             <div className="flex flex-wrap gap-3 text-sm">
-              {/* Service Types */}
               <span className="flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
                 <PawPrint size={14} />
                 {Array.isArray(provider.serviceType) && provider.serviceType.length > 0
@@ -63,16 +86,13 @@ export default function BookingPage() {
                   : "Service"}
               </span>
 
-              {/* Pet Types */}
               <span className="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
                 <PawPrint size={14} />
                 {Array.isArray(provider.petType) && provider.petType.length > 0
                   ? provider.petType.join(" • ")
-                  : "Pet"}{" "}
-                ({provider.petSize || "Size"})
+                  : "Pet"} ({provider.petSize || "Size"})
               </span>
 
-              {/* Area */}
               <span className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full">
                 <MapPin size={14} /> {provider.area || "Area"}
               </span>
@@ -117,6 +137,29 @@ export default function BookingPage() {
           </div>
         </div>
       </div>
+
+      {/* Reviews Section */}
+      {reviews.length > 0 && (
+        <div className="bg-white rounded-xl shadow-md border p-6 space-y-4">
+          <h2 className="text-xl font-semibold text-gray-800">Reviews</h2>
+          {reviews.map((r) => (
+            <div key={r.id} className="border-t pt-2 mt-2 first:border-t-0 first:pt-0 first:mt-0">
+              <div className="flex items-center gap-2 text-yellow-500">
+                {[1,2,3,4,5].map((star) => (
+                  <Star
+                    key={star}
+                    size={14}
+                    className={`${r.rating >= star ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                  />
+                ))}
+                <span className="text-gray-600 text-sm ml-2">{r.userName}</span>
+              </div>
+              <p className="text-gray-700 text-sm mt-1">{r.comment}</p>
+              <p className="text-gray-400 text-xs mt-1">{new Date(r.createdAt.seconds * 1000).toLocaleString()}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Button → Go to Booking Form */}
       <button
