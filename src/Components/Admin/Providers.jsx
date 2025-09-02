@@ -35,6 +35,13 @@ export default function Providers() {
     fetchProviders();
   }, []);
 
+  // ✅ Helper: handles array or string
+  const renderField = (field) => {
+    if (!field) return "-";
+    if (Array.isArray(field)) return field.join(", ");
+    return field;
+  };
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-6 text-orange-500">Manage Providers</h1>
@@ -49,8 +56,8 @@ export default function Providers() {
             <thead className="bg-orange-100">
               <tr>
                 <th className="px-3 py-2 text-left">Name</th>
-                <th className="px-3 py-2 text-left">Service</th>
-                <th className="px-3 py-2 text-left">Pet Type</th>
+                <th className="px-3 py-2 text-left">Services</th>
+                <th className="px-3 py-2 text-left">Pet Types</th>
                 <th className="px-3 py-2 text-left">Area</th>
                 <th className="px-3 py-2 text-left">Approved</th>
                 <th className="px-3 py-2 text-left">Actions</th>
@@ -60,8 +67,8 @@ export default function Providers() {
               {providers.map((p) => (
                 <tr key={p.id} className="border-t">
                   <td className="px-3 py-2">{p.name}</td>
-                  <td className="px-3 py-2">{p.serviceType}</td>
-                  <td className="px-3 py-2">{p.petType}</td>
+                  <td className="px-3 py-2">{renderField(p.serviceTypes || p.serviceType)}</td>
+                  <td className="px-3 py-2">{renderField(p.petTypes || p.petType)}</td>
                   <td className="px-3 py-2">{p.area}</td>
                   <td className="px-3 py-2">
                     {p.approved ? (

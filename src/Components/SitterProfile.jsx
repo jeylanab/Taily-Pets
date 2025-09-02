@@ -4,10 +4,10 @@ import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { firestore } from "../Service/firebase";
 import DatePicker, { DateObject } from "react-multi-date-picker";
 import { FaPhone, FaPaw, FaMapMarkerAlt, FaEnvelope } from "react-icons/fa";
-// added
+
 const areas = ["Nicosia", "Limassol", "Larnaca", "Paphos", "Famagusta"];
-const serviceTypes = ["Dog Walking", "Pet Sitting", "Pet Grooming", "Pet Boarding"];
-const petTypes = ["Dog", "Cat", "Bird", "Other"];
+const serviceTypes = ["Dog Walking", "Pet Sitting", "Pet Boarding"];
+const petTypes = ["Dog - Small", "Dog - Medium", "Dog - Large", "Cat", "Bird", "Rabbit", "Other"];
 const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function SitterProfile() {
@@ -19,8 +19,8 @@ export default function SitterProfile() {
     name: "",
     bio: "",
     area: areas[0],
-    serviceType: serviceTypes[0],
-    petType: petTypes[0],
+    serviceTypes: [],
+    petTypes: [],
     petSize: "",
     phone: "",
     email: "",
@@ -42,7 +42,7 @@ export default function SitterProfile() {
             ...data,
             availabilityDates: data.availabilityDates
               ? data.availabilityDates.map(
-                  (d) => new DateObject(new Date(d.seconds * 1000)) // ✅ convert to DateObject
+                  (d) => new DateObject(new Date(d.seconds * 1000))
                 )
               : []
           };
@@ -58,13 +58,23 @@ export default function SitterProfile() {
     fetchProfile();
   }, [id]);
 
-  // 🔹 Handle input change
+  // 🔹 Handle text/boolean change
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value
     }));
+  };
+
+  // 🔹 Toggle array fields
+  const handleArrayToggle = (field, value) => {
+    setFormData((prev) => {
+      const updated = prev[field]?.includes(value)
+        ? prev[field].filter((v) => v !== value)
+        : [...(prev[field] || []), value];
+      return { ...prev, [field]: updated };
+    });
   };
 
   // 🔹 Handle recurring days
@@ -84,7 +94,7 @@ export default function SitterProfile() {
       const dataToSave = {
         ...formData,
         availabilityDates: formData.availabilityDates.map((d) =>
-          Timestamp.fromDate(d.toDate()) // ✅ convert DateObject -> Firestore Timestamp
+          Timestamp.fromDate(d.toDate())
         )
       };
       await updateDoc(docRef, dataToSave);
@@ -130,7 +140,12 @@ export default function SitterProfile() {
         <div className="flex flex-col">
           <label className="font-semibold">Area:</label>
           {editMode ? (
-            <select name="area" value={formData.area} onChange={handleChange} className="border rounded p-2">
+            <select
+              name="area"
+              value={formData.area}
+              onChange={handleChange}
+              className="border rounded p-2"
+            >
               {areas.map((a) => (
                 <option key={a} value={a}>
                   {a}
@@ -145,47 +160,49 @@ export default function SitterProfile() {
           )}
         </div>
 
-        {/* Service Type */}
+        {/* Service Types (Array) */}
         <div className="flex flex-col">
-          <label className="font-semibold">Service Type:</label>
+          <label className="font-semibold">Services:</label>
           {editMode ? (
-            <select
-              name="serviceType"
-              value={formData.serviceType}
-              onChange={handleChange}
-              className="border rounded p-2"
-            >
+            <div className="flex flex-wrap gap-3">
               {serviceTypes.map((s) => (
-                <option key={s} value={s}>
+                <label key={s} className="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.serviceTypes?.includes(s)}
+                    onChange={() => handleArrayToggle("serviceTypes", s)}
+                    className="mr-1"
+                  />
                   {s}
-                </option>
+                </label>
               ))}
-            </select>
+            </div>
           ) : (
-            <span>{profile.serviceType}</span>
+            <span>{profile.serviceTypes?.join(" · ")}</span>
           )}
         </div>
 
-        {/* Pet Type */}
+        {/* Pet Types (Array) */}
         <div className="flex flex-col">
-          <label className="font-semibold">Pet Type:</label>
+          <label className="font-semibold">Pets Accepted:</label>
           {editMode ? (
-            <select
-              name="petType"
-              value={formData.petType}
-              onChange={handleChange}
-              className="border rounded p-2"
-            >
+            <div className="flex flex-wrap gap-3">
               {petTypes.map((p) => (
-                <option key={p} value={p}>
+                <label key={p} className="inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.petTypes?.includes(p)}
+                    onChange={() => handleArrayToggle("petTypes", p)}
+                    className="mr-1"
+                  />
                   {p}
-                </option>
+                </label>
               ))}
-            </select>
+            </div>
           ) : (
             <span className="flex items-center">
               <FaPaw className="text-orange-500 mr-2" />
-              {profile.petType}
+              {profile.petTypes?.join(" · ")}
             </span>
           )}
         </div>
@@ -256,7 +273,9 @@ export default function SitterProfile() {
           {editMode ? (
             <DatePicker
               value={formData.availabilityDates}
-              onChange={(dates) => setFormData((prev) => ({ ...prev, availabilityDates: dates }))}
+              onChange={(dates) =>
+                setFormData((prev) => ({ ...prev, availabilityDates: dates }))
+              }
               multiple
               sort
               format="DD/MM/YYYY"
@@ -264,9 +283,9 @@ export default function SitterProfile() {
             />
           ) : (
             <span>
-              {formData.availabilityDates.map((d, i) =>
-                new Date(d.toDate()).toLocaleDateString()
-              ).join(", ")}
+              {formData.availabilityDates
+                .map((d) => new Date(d.toDate()).toLocaleDateString())
+                .join(", ")}
             </span>
           )}
         </div>

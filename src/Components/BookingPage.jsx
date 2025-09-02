@@ -55,12 +55,24 @@ export default function BookingPage() {
             <p className="text-gray-600">{provider.bio}</p>
 
             <div className="flex flex-wrap gap-3 text-sm">
+              {/* Service Types */}
               <span className="flex items-center gap-1 bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
-                <PawPrint size={14} /> {provider.serviceType || "Service"}
+                <PawPrint size={14} />
+                {Array.isArray(provider.serviceType) && provider.serviceType.length > 0
+                  ? provider.serviceType.join(" • ")
+                  : "Service"}
               </span>
+
+              {/* Pet Types */}
               <span className="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                <PawPrint size={14} /> {provider.petType || "Pet"} ({provider.petSize || "Size"})
+                <PawPrint size={14} />
+                {Array.isArray(provider.petType) && provider.petType.length > 0
+                  ? provider.petType.join(" • ")
+                  : "Pet"}{" "}
+                ({provider.petSize || "Size"})
               </span>
+
+              {/* Area */}
               <span className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-1 rounded-full">
                 <MapPin size={14} /> {provider.area || "Area"}
               </span>

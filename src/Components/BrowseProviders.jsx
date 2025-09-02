@@ -40,10 +40,14 @@ export default function BrowseProviders() {
         data = data.filter((p) => p.area?.toLowerCase() === filterArea.toLowerCase());
       }
       if (filterService) {
-        data = data.filter((p) => p.serviceType?.toLowerCase() === filterService.toLowerCase());
+        data = data.filter(
+          (p) => p.serviceType?.some((s) => s.toLowerCase() === filterService.toLowerCase())
+        );
       }
       if (filterPetType) {
-        data = data.filter((p) => p.petType?.toLowerCase() === filterPetType.toLowerCase());
+        data = data.filter(
+          (p) => p.petType?.some((pt) => pt.toLowerCase() === filterPetType.toLowerCase())
+        );
       }
       if (filterDate) {
         const selectedDate = new Date(filterDate).toDateString();
@@ -153,7 +157,9 @@ export default function BrowseProviders() {
                 <div className="p-6 flex flex-col gap-3">
                   <h2 className="text-lg font-semibold text-gray-900">{p.name}</h2>
                   <p className="text-sm text-gray-600 flex items-center gap-2">
-                    <PawPrint size={14} /> {p.serviceType} • {p.petType}
+                    <PawPrint size={14} />{" "}
+                    {Array.isArray(p.serviceType) ? p.serviceType.join(" • ") : p.serviceType || "Service"} •{" "}
+                    {Array.isArray(p.petType) ? p.petType.join(" • ") : p.petType || "Pet"}
                   </p>
                   <p className="text-sm text-gray-500 flex items-center gap-2">
                     <MapPin size={14} /> {p.area}
