@@ -35,7 +35,7 @@ export default function BookingFormPage() {
 
   // Options
   const serviceOptions = ["Pet Boarding", "Dog Walking", "Pet Sitting", "Plant Watering"];
-  const petTypeOptions = ["Dog", "Cat", "Bird", "Rabbit"];
+  const petTypeOptions = ["Dog", "Cat", "Bird", "Rabbit", "Other"];
   const petSizeOptions = ["Small", "Medium", "Large"];
   const serviceLengthOptions = ["1 hour", "2 hours", "Half-day", "Full-day"];
 

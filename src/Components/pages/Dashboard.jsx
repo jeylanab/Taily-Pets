@@ -9,6 +9,7 @@ import {
   doc,
   addDoc,
   serverTimestamp,
+  getDoc,
 } from "firebase/firestore";
 import { auth, firestore } from "../../Service/firebase";
 import {
@@ -34,7 +35,7 @@ export default function Dashboard() {
       if (!auth.currentUser) return;
       try {
         const userRef = doc(firestore, "users", auth.currentUser.uid);
-        const userSnap = await getDocs(userRef);
+        const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
           setUserRole(userSnap.data().role || "user");
         }
@@ -68,13 +69,24 @@ export default function Dashboard() {
         }
 
         const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          showReview: false,
-          rating: 0,
-          comment: "",
-        }));
+
+        const data = await Promise.all(
+          querySnapshot.docs.map(async (docSnap) => {
+            const bookingData = { id: docSnap.id, ...docSnap.data(), rating: 0, comment: "" };
+
+            // Check if a review already exists for this booking
+            const reviewQuery = query(
+              collection(firestore, "Reviews"),
+              where("bookingId", "==", docSnap.id)
+            );
+            const reviewSnap = await getDocs(reviewQuery);
+
+            bookingData.showReview = bookingData.status === "Completed" && reviewSnap.empty;
+
+            return bookingData;
+          })
+        );
+
         setBookings(data);
       } catch (err) {
         console.error("Error fetching bookings:", err);
@@ -86,7 +98,6 @@ export default function Dashboard() {
     fetchBookings();
   }, [userRole]);
 
-  // ✅ Calculate if booking can be marked as complete
   const isBookingCompletable = (booking) => {
     const now = new Date();
     const toDate = booking.toDate?.toDate
@@ -96,36 +107,23 @@ export default function Dashboard() {
     return now >= toDate && booking.status === "Accepted";
   };
 
-  // Update booking status
   const updateStatus = async (bookingId, newStatus) => {
     try {
       const bookingRef = doc(firestore, "Bookings", bookingId);
       await updateDoc(bookingRef, { status: newStatus });
+
       setBookings((prev) =>
-        prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus } : b))
+        prev.map((b) =>
+          b.id === bookingId
+            ? { ...b, status: newStatus, showReview: newStatus === "Completed" }
+            : b
+        )
       );
     } catch (err) {
       console.error("Error updating booking status:", err);
     }
   };
 
-  // Mark complete
-  const handleComplete = async (bookingId) => {
-    try {
-      const bookingRef = doc(firestore, "Bookings", bookingId);
-      await updateDoc(bookingRef, { status: "Completed" });
-
-      setBookings((prev) =>
-        prev.map((b) =>
-          b.id === bookingId ? { ...b, status: "Completed", showReview: true } : b
-        )
-      );
-    } catch (err) {
-      console.error("Error completing booking:", err);
-    }
-  };
-
-  // Submit review
   const submitReview = async (bookingId, providerId, rating, comment) => {
     if (!rating || !comment) {
       alert("Please provide both rating and comment.");
@@ -145,25 +143,18 @@ export default function Dashboard() {
 
       alert("Review submitted successfully!");
       setBookings((prev) =>
-        prev.map((b) =>
-          b.id === bookingId ? { ...b, showReview: false } : b
-        )
+        prev.map((b) => (b.id === bookingId ? { ...b, showReview: false } : b))
       );
     } catch (err) {
       console.error("Error submitting review:", err);
     }
   };
 
-  if (!auth.currentUser)
-    return (
-      <p className="p-10 text-center text-red-500">
-        Please log in to view your dashboard.
-      </p>
-    );
-  if (loading)
+  if (loading) {
     return (
       <p className="p-10 text-center text-gray-500">Loading dashboard...</p>
     );
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6 font-poppins space-y-6">
@@ -181,12 +172,12 @@ export default function Dashboard() {
             key={b.id}
             className="border border-orange-200 rounded-xl p-5 bg-white shadow-md hover:shadow-lg transition flex flex-col justify-between"
           >
+            {/* Booking Info & Status */}
             <div className="space-y-2">
               <h2 className="text-xl font-semibold flex items-center gap-2 text-orange-500">
                 <FaPaw /> {b.serviceType}
               </h2>
 
-              {/* Booking Dates */}
               <p className="flex items-center gap-2 text-gray-700">
                 <FaCalendarAlt />{" "}
                 {b.fromDate?.toDate
@@ -198,24 +189,20 @@ export default function Dashboard() {
                   : new Date(b.toDate).toLocaleDateString()}
               </p>
 
-              {/* Time */}
               <p className="flex items-center gap-2 text-gray-700">
                 <FaClock /> {b.time} ({b.serviceLength})
               </p>
 
-              {/* Booking Method */}
               {b.bookingMethod && (
                 <p className="flex items-center gap-2 text-gray-700">
                   <FaListUl /> Method: {b.bookingMethod}
                 </p>
               )}
 
-              {/* Pet Info */}
               <p className="flex items-center gap-2 text-gray-700">
                 <FaPaw /> {b.petType} / {b.petSize} ({b.petNumber || 1} pets)
               </p>
 
-              {/* Status */}
               <p className="flex items-center gap-2">
                 <span className="font-semibold">Status:</span>
                 <span
@@ -233,7 +220,6 @@ export default function Dashboard() {
                 </span>
               </p>
 
-              {/* User details for sitters/admin */}
               {userRole !== "user" && (
                 <>
                   <p className="flex items-center gap-2 text-gray-700">
@@ -246,7 +232,7 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Action Buttons */}
+            {/* Actions */}
             <div className="flex flex-wrap gap-2 mt-4">
               {userRole !== "user" && b.status === "Pending" && (
                 <>
@@ -269,7 +255,7 @@ export default function Dashboard() {
                 isBookingCompletable(b) &&
                 b.status === "Accepted" && (
                   <button
-                    onClick={() => handleComplete(b.id)}
+                    onClick={() => updateStatus(b.id, "Completed")}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition font-semibold"
                   >
                     <FaCheckCircle /> Complete

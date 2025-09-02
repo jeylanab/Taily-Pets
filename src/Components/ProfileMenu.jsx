@@ -80,7 +80,7 @@ const ProfileMenu = ({ user }) => {
           {/* User Links (normal users can see their bookings) */}
           {user.role === "user" && (
             <button
-              onClick={() => navigate("/my-bookings")}
+              onClick={() => navigate("/dashboard")}
               className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
             >
               <BookOpen className="w-4 h-4" /> My Bookings
