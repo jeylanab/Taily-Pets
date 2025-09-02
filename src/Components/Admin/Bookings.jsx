@@ -23,15 +23,23 @@ export default function Bookings() {
 
   // Update booking status
   const updateStatus = async (id, status) => {
-    await updateDoc(doc(firestore, "Bookings", id), { status });
-    fetchBookings();
+    try {
+      await updateDoc(doc(firestore, "Bookings", id), { status });
+      fetchBookings();
+    } catch (err) {
+      console.error("Error updating status:", err);
+    }
   };
 
   // Delete booking
   const deleteBooking = async (id) => {
     if (confirm("Are you sure you want to delete this booking?")) {
-      await deleteDoc(doc(firestore, "Bookings", id));
-      fetchBookings();
+      try {
+        await deleteDoc(doc(firestore, "Bookings", id));
+        fetchBookings();
+      } catch (err) {
+        console.error("Error deleting booking:", err);
+      }
     }
   };
 
@@ -39,14 +47,19 @@ export default function Bookings() {
     fetchBookings();
   }, []);
 
+  const formatDate = (timestamp) =>
+    timestamp ? new Date(timestamp.seconds * 1000).toLocaleDateString() : "N/A";
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-orange-500">Manage Bookings</h1>
+      <h1 className="text-3xl font-bold mb-6 text-orange-500 text-center">
+        Manage Bookings
+      </h1>
 
       {loading ? (
-        <p>Loading bookings...</p>
+        <p className="text-center text-gray-500">Loading bookings...</p>
       ) : bookings.length === 0 ? (
-        <p>No bookings found.</p>
+        <p className="text-center text-gray-500">No bookings found.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full table-auto bg-white rounded-xl shadow overflow-hidden">
@@ -56,9 +69,12 @@ export default function Bookings() {
                 <th className="px-3 py-2 text-left">Email</th>
                 <th className="px-3 py-2 text-left">Provider</th>
                 <th className="px-3 py-2 text-left">Service</th>
-                <th className="px-3 py-2 text-left">Length</th>
+                <th className="px-3 py-2 text-left">Length / Duration</th>
                 <th className="px-3 py-2 text-left">Pet Type</th>
-                <th className="px-3 py-2 text-left">Date</th>
+                <th className="px-3 py-2 text-left">Pet Size</th>
+                <th className="px-3 py-2 text-left">Pet Number</th>
+                <th className="px-3 py-2 text-left">From Date</th>
+                <th className="px-3 py-2 text-left">To Date</th>
                 <th className="px-3 py-2 text-left">Time</th>
                 <th className="px-3 py-2 text-left">Status</th>
                 <th className="px-3 py-2 text-left">Actions</th>
@@ -66,18 +82,20 @@ export default function Bookings() {
             </thead>
             <tbody>
               {bookings.map((b) => (
-                <tr key={b.id} className="border-t">
-                  <td className="px-3 py-2">{b.userName}</td>
-                  <td className="px-3 py-2">{b.userEmail}</td>
-                  <td className="px-3 py-2">{b.providerName}</td>
-                  <td className="px-3 py-2">{b.serviceType}</td>
-                  <td className="px-3 py-2">{b.serviceLength || "N/A"}</td>
-                  <td className="px-3 py-2">{b.petType}</td>
-                  <td className="px-3 py-2">{new Date(b.date.seconds * 1000).toLocaleDateString()}</td>
-                  <td className="px-3 py-2">{b.time}</td>
-                  <td className="px-3 py-2">{b.status}</td>
+                <tr key={b.id} className="border-t hover:bg-gray-50">
+                  <td className="px-3 py-2">{b.userName || "N/A"}</td>
+                  <td className="px-3 py-2">{b.userEmail || "N/A"}</td>
+                  <td className="px-3 py-2">{b.providerName || "N/A"}</td>
+                  <td className="px-3 py-2">{b.serviceType || "N/A"}</td>
+                  <td className="px-3 py-2">{b.serviceLength || b.duration || "N/A"}</td>
+                  <td className="px-3 py-2">{b.petType || "N/A"}</td>
+                  <td className="px-3 py-2">{b.petSize || "N/A"}</td>
+                  <td className="px-3 py-2">{b.petNumber || "N/A"}</td>
+                  <td className="px-3 py-2">{formatDate(b.fromDate)}</td>
+                  <td className="px-3 py-2">{formatDate(b.toDate)}</td>
+                  <td className="px-3 py-2">{b.time || "N/A"}</td>
+                  <td className="px-3 py-2">{b.status || "Pending"}</td>
                   <td className="px-3 py-2 flex gap-1 flex-wrap">
-                    {/* Very small buttons with orange scheme */}
                     <button
                       onClick={() => updateStatus(b.id, "Accepted")}
                       className="bg-orange-500 text-white px-2 py-1 rounded text-xs hover:bg-orange-600 flex items-center gap-1"
@@ -86,13 +104,13 @@ export default function Bookings() {
                     </button>
                     <button
                       onClick={() => updateStatus(b.id, "Completed")}
-                      className="bg-orange-500 text-white px-2 py-1 rounded text-xs hover:bg-orange-600 flex items-center gap-1"
+                      className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600 flex items-center gap-1"
                     >
                       <FaCheck /> Complete
                     </button>
                     <button
                       onClick={() => updateStatus(b.id, "Rejected")}
-                      className="bg-orange-500 text-white px-2 py-1 rounded text-xs hover:bg-orange-600 flex items-center gap-1"
+                      className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 flex items-center gap-1"
                     >
                       <FaTimes /> Reject
                     </button>
