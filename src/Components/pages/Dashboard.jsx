@@ -1,6 +1,15 @@
 // src/components/Dashboard.jsx
 import { useState, useEffect } from "react";
-import { collection, query, where, getDocs, updateDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+  doc,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import { auth, firestore } from "../../Service/firebase";
 import {
   FaCalendarAlt,
@@ -10,7 +19,8 @@ import {
   FaPaw,
   FaCheckCircle,
   FaTimesCircle,
-  FaStar
+  FaStar,
+  FaListUl,
 } from "react-icons/fa";
 
 export default function Dashboard() {
@@ -22,10 +32,14 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchUserRole = async () => {
       if (!auth.currentUser) return;
-      const userRef = doc(firestore, "users", auth.currentUser.uid);
-      const userSnap = await getDocs(userRef);
-      if (userSnap.exists()) {
-        setUserRole(userSnap.data().role || "user");
+      try {
+        const userRef = doc(firestore, "users", auth.currentUser.uid);
+        const userSnap = await getDocs(userRef);
+        if (userSnap.exists()) {
+          setUserRole(userSnap.data().role || "user");
+        }
+      } catch (err) {
+        console.error("Error fetching user role:", err);
       }
     };
     fetchUserRole();
@@ -72,27 +86,14 @@ export default function Dashboard() {
     fetchBookings();
   }, [userRole]);
 
-  // Check if booking time has passed
+  // ✅ Calculate if booking can be marked as complete
   const isBookingCompletable = (booking) => {
     const now = new Date();
-    const bookingDate = booking.date?.toDate ? booking.date.toDate() : new Date(booking.date);
-    let bookingEnd = new Date(bookingDate);
+    const toDate = booking.toDate?.toDate
+      ? booking.toDate.toDate()
+      : new Date(booking.toDate);
 
-    switch (booking.serviceLength) {
-      case "30min":
-        bookingEnd.setMinutes(bookingEnd.getMinutes() + 30);
-        break;
-      case "Half-day":
-        bookingEnd.setHours(bookingEnd.getHours() + 4);
-        break;
-      case "Full-day":
-        bookingEnd.setHours(bookingEnd.getHours() + 8);
-        break;
-      default:
-        bookingEnd.setHours(bookingEnd.getHours() + 1);
-    }
-
-    return now >= bookingEnd && booking.status === "Accepted";
+    return now >= toDate && booking.status === "Accepted";
   };
 
   // Update booking status
@@ -108,7 +109,7 @@ export default function Dashboard() {
     }
   };
 
-  // Complete booking and show review
+  // Mark complete
   const handleComplete = async (bookingId) => {
     try {
       const bookingRef = doc(firestore, "Bookings", bookingId);
@@ -124,7 +125,7 @@ export default function Dashboard() {
     }
   };
 
-  // Submit review to Firestore
+  // Submit review
   const submitReview = async (bookingId, providerId, rating, comment) => {
     if (!rating || !comment) {
       alert("Please provide both rating and comment.");
@@ -154,14 +155,25 @@ export default function Dashboard() {
   };
 
   if (!auth.currentUser)
-    return <p className="p-10 text-center text-red-500">Please log in to view your dashboard.</p>;
-  if (loading) return <p className="p-10 text-center text-gray-500">Loading dashboard...</p>;
+    return (
+      <p className="p-10 text-center text-red-500">
+        Please log in to view your dashboard.
+      </p>
+    );
+  if (loading)
+    return (
+      <p className="p-10 text-center text-gray-500">Loading dashboard...</p>
+    );
 
   return (
     <div className="max-w-6xl mx-auto p-6 font-poppins space-y-6">
-      <h1 className="text-3xl font-bold text-orange-500">Dashboard ({userRole.toUpperCase()})</h1>
+      <h1 className="text-3xl font-bold text-orange-500">
+        Dashboard ({userRole.toUpperCase()})
+      </h1>
 
-      {bookings.length === 0 && <p className="text-gray-500">No bookings found.</p>}
+      {bookings.length === 0 && (
+        <p className="text-gray-500">No bookings found.</p>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {bookings.map((b) => (
@@ -173,12 +185,37 @@ export default function Dashboard() {
               <h2 className="text-xl font-semibold flex items-center gap-2 text-orange-500">
                 <FaPaw /> {b.serviceType}
               </h2>
+
+              {/* Booking Dates */}
               <p className="flex items-center gap-2 text-gray-700">
-                <FaCalendarAlt /> {b.date?.toDate ? b.date.toDate().toLocaleDateString() : new Date(b.date).toLocaleDateString()}
+                <FaCalendarAlt />{" "}
+                {b.fromDate?.toDate
+                  ? b.fromDate.toDate().toLocaleDateString()
+                  : new Date(b.fromDate).toLocaleDateString()}{" "}
+                →{" "}
+                {b.toDate?.toDate
+                  ? b.toDate.toDate().toLocaleDateString()
+                  : new Date(b.toDate).toLocaleDateString()}
               </p>
+
+              {/* Time */}
               <p className="flex items-center gap-2 text-gray-700">
-                <FaClock /> {b.time}
+                <FaClock /> {b.time} ({b.serviceLength})
               </p>
+
+              {/* Booking Method */}
+              {b.bookingMethod && (
+                <p className="flex items-center gap-2 text-gray-700">
+                  <FaListUl /> Method: {b.bookingMethod}
+                </p>
+              )}
+
+              {/* Pet Info */}
+              <p className="flex items-center gap-2 text-gray-700">
+                <FaPaw /> {b.petType} / {b.petSize} ({b.petNumber || 1} pets)
+              </p>
+
+              {/* Status */}
               <p className="flex items-center gap-2">
                 <span className="font-semibold">Status:</span>
                 <span
@@ -187,6 +224,8 @@ export default function Dashboard() {
                       ? "text-yellow-500"
                       : b.status === "Accepted"
                       ? "text-green-500"
+                      : b.status === "Completed"
+                      ? "text-blue-500"
                       : "text-red-500"
                   }`}
                 >
@@ -194,6 +233,7 @@ export default function Dashboard() {
                 </span>
               </p>
 
+              {/* User details for sitters/admin */}
               {userRole !== "user" && (
                 <>
                   <p className="flex items-center gap-2 text-gray-700">
@@ -201,9 +241,6 @@ export default function Dashboard() {
                   </p>
                   <p className="flex items-center gap-2 text-gray-700">
                     <FaPhone /> {b.userContact}
-                  </p>
-                  <p className="flex items-center gap-2 text-gray-700">
-                    <FaPaw /> {b.petType} / {b.petSize}
                   </p>
                 </>
               )}
@@ -228,46 +265,61 @@ export default function Dashboard() {
                 </>
               )}
 
-              {/* Complete button after booking time */}
-              {userRole !== "user" && isBookingCompletable(b) && b.status === "Accepted" && (
-                <button
-                  onClick={() => handleComplete(b.id)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition font-semibold"
-                >
-                  <FaCheckCircle /> Complete
-                </button>
-              )}
+              {userRole !== "user" &&
+                isBookingCompletable(b) &&
+                b.status === "Accepted" && (
+                  <button
+                    onClick={() => handleComplete(b.id)}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition font-semibold"
+                  >
+                    <FaCheckCircle /> Complete
+                  </button>
+                )}
             </div>
 
-            {/* Review / Rating Form */}
+            {/* Review Form */}
             {b.showReview && (
               <div className="mt-4 p-3 border-t border-gray-200">
-                <p className="font-semibold text-gray-700 mb-2">Leave a Review & Rating:</p>
+                <p className="font-semibold text-gray-700 mb-2">
+                  Leave a Review & Rating:
+                </p>
                 <div className="flex items-center gap-1 text-yellow-400">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <FaStar
                       key={star}
-                      className={`cursor-pointer hover:scale-110 transition ${star <= b.rating ? "text-yellow-400" : "text-gray-300"}`}
-                      onClick={() => setBookings(prev =>
-                        prev.map(booking =>
-                          booking.id === b.id ? { ...booking, rating: star } : booking
+                      className={`cursor-pointer hover:scale-110 transition ${
+                        star <= b.rating ? "text-yellow-400" : "text-gray-300"
+                      }`}
+                      onClick={() =>
+                        setBookings((prev) =>
+                          prev.map((booking) =>
+                            booking.id === b.id
+                              ? { ...booking, rating: star }
+                              : booking
+                          )
                         )
-                      )}
+                      }
                     />
                   ))}
                 </div>
                 <textarea
                   value={b.comment}
-                  onChange={(e) => setBookings(prev =>
-                    prev.map(booking =>
-                      booking.id === b.id ? { ...booking, comment: e.target.value } : booking
+                  onChange={(e) =>
+                    setBookings((prev) =>
+                      prev.map((booking) =>
+                        booking.id === b.id
+                          ? { ...booking, comment: e.target.value }
+                          : booking
+                      )
                     )
-                  )}
+                  }
                   placeholder="Write your review..."
                   className="w-full mt-2 p-2 border rounded"
                 />
                 <button
-                  onClick={() => submitReview(b.id, b.providerId, b.rating, b.comment)}
+                  onClick={() =>
+                    submitReview(b.id, b.providerId, b.rating, b.comment)
+                  }
                   className="mt-2 px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition font-semibold"
                 >
                   Submit Review

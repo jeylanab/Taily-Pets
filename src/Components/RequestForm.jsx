@@ -2,24 +2,32 @@ import { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { firestore } from "../Service/firebase";
 import { motion } from "framer-motion";
-import { User, Mail, PawPrint, MapPin, Calendar, FileText, Check } from "lucide-react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import { User, Mail, PawPrint, MapPin, FileText, Check, Clock, Calendar } from "lucide-react";
+import { DateRange } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
 
 export default function RequestForm() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [serviceType, setServiceType] = useState("");
   const [petType, setPetType] = useState("");
+  const [petSize, setPetSize] = useState("");
   const [area, setArea] = useState("");
-  const [preferredDates, setPreferredDates] = useState(null);
+  const [useCustomRange, setUseCustomRange] = useState(false);
+  const [customRange, setCustomRange] = useState([
+    { startDate: new Date(), endDate: new Date(), key: "selection" },
+  ]);
+  const [duration, setDuration] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const serviceOptions = ["Pet Boarding", "Dog Walking", "Pet Sitting", "Plant Watering"];
-  const petOptions = ["Dog", "Cat", "Bird", "Other"];
+  const petOptions = ["Dog", "Cat", "Bird", "Rabbit"];
   const areaOptions = ["Nicosia", "Larnaca", "Limassol", "Paphos", "Famagusta"];
+  const durationOptions = ["1 Hour", "Half Day", "Full Day"];
+  const petSizeOptions = ["Small", "Medium", "Large"];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,21 +39,33 @@ export default function RequestForm() {
         email,
         serviceType,
         petType,
+        petSize,
         area,
-        preferredDates: preferredDates ? preferredDates.toISOString() : "",
+        dateInfo: useCustomRange
+          ? {
+              type: "Custom Range",
+              start: customRange[0].startDate.toISOString(),
+              end: customRange[0].endDate.toISOString(),
+            }
+          : {
+              type: "Duration",
+              value: duration,
+            },
         notes,
         createdAt: serverTimestamp(),
       });
 
       setSubmitted(true);
-
       setTimeout(() => {
         setFullName("");
         setEmail("");
         setServiceType("");
         setPetType("");
+        setPetSize("");
         setArea("");
-        setPreferredDates(null);
+        setDuration("");
+        setCustomRange([{ startDate: new Date(), endDate: new Date(), key: "selection" }]);
+        setUseCustomRange(false);
         setNotes("");
         setSubmitted(false);
       }, 2000);
@@ -93,7 +113,7 @@ export default function RequestForm() {
         />
       </div>
 
-      {/* Service Type Dropdown */}
+      {/* Service Type */}
       <div className="relative">
         <PawPrint className="absolute left-3 top-3 text-orange-500" size={20} />
         <select
@@ -109,7 +129,7 @@ export default function RequestForm() {
         </select>
       </div>
 
-      {/* Pet Type Dropdown */}
+      {/* Pet Type */}
       <div className="relative">
         <PawPrint className="absolute left-3 top-3 text-orange-500" size={20} />
         <select
@@ -125,7 +145,23 @@ export default function RequestForm() {
         </select>
       </div>
 
-      {/* Area / Location Dropdown */}
+      {/* Pet Size */}
+      <div className="relative">
+        <PawPrint className="absolute left-3 top-3 text-orange-500" size={20} />
+        <select
+          value={petSize}
+          onChange={(e) => setPetSize(e.target.value)}
+          required
+          className="w-full pl-10 p-3 border border-black/20 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none transition bg-white"
+        >
+          <option value="">Select Pet Size</option>
+          {petSizeOptions.map((size, idx) => (
+            <option key={idx} value={size}>{size}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Area */}
       <div className="relative">
         <MapPin className="absolute left-3 top-3 text-orange-500" size={20} />
         <select
@@ -141,16 +177,54 @@ export default function RequestForm() {
         </select>
       </div>
 
-      {/* Preferred Dates */}
-      <div className="relative">
-        <Calendar className="absolute left-3 top-3 text-orange-500" size={20} />
-        <DatePicker
-          selected={preferredDates}
-          onChange={(date) => setPreferredDates(date)}
-          placeholderText="Select Preferred Date"
-          className="w-full pl-10 p-3 border border-black/20 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none transition"
-        />
+      {/* Toggle: Custom Range or Duration */}
+      <div className="flex items-center gap-4">
+        <label className="flex items-center gap-1">
+          <input
+            type="radio"
+            checked={!useCustomRange}
+            onChange={() => setUseCustomRange(false)}
+          />
+          Predefined Duration
+        </label>
+        <label className="flex items-center gap-1">
+          <input
+            type="radio"
+            checked={useCustomRange}
+            onChange={() => setUseCustomRange(true)}
+          />
+          Custom Date Range
+        </label>
       </div>
+
+      {/* Duration or Date Picker */}
+      {useCustomRange ? (
+        <div className="relative">
+          <Calendar className="absolute left-3 top-3 text-orange-500" size={20} />
+          <DateRange
+            editableDateInputs={true}
+            onChange={(item) => setCustomRange([item.selection])}
+            moveRangeOnFirstSelection={false}
+            ranges={customRange}
+            className="mt-2"
+          />
+        </div>
+      ) : (
+        <div className="relative">
+          <Clock className="absolute left-3 top-3 text-orange-500" size={20} />
+          <select
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+            required
+            className="w-full pl-10 p-3 border border-black/20 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none transition bg-white"
+          >
+            <option value="">Select Duration</option>
+            {durationOptions.map((d, idx) => (
+              <option key={idx} value={d}>{d}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Notes */}
       <div className="relative">
@@ -164,7 +238,7 @@ export default function RequestForm() {
         />
       </div>
 
-      {/* Submit Button */}
+      {/* Submit */}
       <button
         type="submit"
         disabled={loading || submitted}

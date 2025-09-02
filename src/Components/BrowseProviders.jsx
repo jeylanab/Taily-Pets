@@ -18,7 +18,7 @@ export default function BrowseProviders() {
 
   const navigate = useNavigate();
 
-  const serviceOptions = ["Dog Walking", "Pet Sitting", "Pet Boarding"];
+  const serviceOptions = ["Dog Walking", "Pet Sitting", "Pet Boarding", "Plant Watering"];
   const petTypeOptions = ["Dog", "Cat", "Bird", "Rabbit"];
   const areaOptions = ["Nicosia", "Larnaca", "Limassol", "Paphos", "Famagusta"];
 

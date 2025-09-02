@@ -1,8 +1,8 @@
-// src/components/BookingPage.jsx
+// src/pages/BookingPage.jsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { auth, firestore } from "../Service/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { firestore } from "../Service/firebase";
 import { Star, MapPin, PawPrint, Clock, Info } from "lucide-react";
 
 export default function BookingPage() {
@@ -11,22 +11,8 @@ export default function BookingPage() {
 
   const [provider, setProvider] = useState(null);
   const [loadingProvider, setLoadingProvider] = useState(true);
-
-  const [userName, setUserName] = useState("");
-  const [userEmail, setUserEmail] = useState("");
-  const [userContact, setUserContact] = useState("");
-
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [service, setService] = useState("");
-  const [serviceLength, setServiceLength] = useState("1 hour");
-  const [submitting, setSubmitting] = useState(false);
   const [showAllDetails, setShowAllDetails] = useState(false);
 
-  const serviceOptions = ["Pet Boarding", "Dog Walking", "Pet Sitting", "Plant Watering"];
-  const serviceLengthOptions = ["30 minutes", "1 hour", "2 hours", "Half-day", "Full-day"];
-
-  // Fetch provider/sitter data
   useEffect(() => {
     const fetchProvider = async () => {
       setLoadingProvider(true);
@@ -48,52 +34,6 @@ export default function BookingPage() {
 
     fetchProvider();
   }, [id, navigate]);
-
-  // Pre-fill logged-in user info
-  useEffect(() => {
-    if (auth.currentUser) {
-      setUserName(auth.currentUser.displayName || "");
-      setUserEmail(auth.currentUser.email || "");
-    }
-  }, []);
-
-  // Submit booking
-  const handleSubmitBooking = async () => {
-    if (!auth.currentUser) {
-      alert("⚠️ Please log in to make a booking.");
-      navigate("/login");
-      return;
-    }
-
-    if (!provider) return;
-
-    setSubmitting(true);
-    try {
-      const docRef = await addDoc(collection(firestore, "Bookings"), {
-        userId: auth.currentUser.uid,
-        userName: userName || auth.currentUser.displayName || "Guest",
-        userEmail: userEmail || auth.currentUser.email,
-        userContact,
-        providerId: provider.id,
-        providerName: provider.name,
-        serviceType: service,
-        petType: provider.petType || "Unknown",
-        petSize: provider.petSize || "Unknown",
-        date: new Date(date),
-        time,
-        serviceLength,
-        status: "Pending",
-        createdAt: serverTimestamp(),
-      });
-
-      alert(`✅ Booking request submitted!\nBooking ID: ${docRef.id}`);
-      navigate("/dashboard");
-    } catch (err) {
-      console.error("Booking error:", err);
-      alert("❌ Failed to submit booking.");
-    }
-    setSubmitting(false);
-  };
 
   if (loadingProvider) return <p className="p-10 text-center text-gray-500">Loading sitter...</p>;
   if (!provider) return null;
@@ -160,102 +100,19 @@ export default function BookingPage() {
                 </p>
                 <p><span className="font-semibold">Phone:</span> {provider.phone || "N/A"}</p>
                 <p><span className="font-semibold">Email:</span> {provider.email || "N/A"}</p>
-                {provider.createdAt && (
-                  <p>
-                    <span className="font-semibold">Created At:</span>{" "}
-                    {new Date(provider.createdAt.seconds * 1000).toLocaleDateString()}
-                  </p>
-                )}
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Booking Form */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmitBooking();
-        }}
-        className="bg-white border rounded-xl p-6 shadow-sm space-y-4"
+      {/* Button → Go to Booking Form */}
+      <button
+        onClick={() => navigate(`/book/${provider.id}/form`)}
+        className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition font-semibold"
       >
-        <h2 className="text-xl font-semibold text-gray-900">Your Booking Details</h2>
-
-        <input
-          type="text"
-          placeholder="Your Name"
-          value={userName}
-          onChange={(e) => setUserName(e.target.value)}
-          required
-          className="w-full border p-3 rounded focus:ring-2 focus:ring-orange-400 outline-none"
-        />
-
-        <input
-          type="email"
-          placeholder="Your Email"
-          value={userEmail}
-          onChange={(e) => setUserEmail(e.target.value)}
-          required
-          className="w-full border p-3 rounded focus:ring-2 focus:ring-orange-400 outline-none"
-        />
-
-        <input
-          type="text"
-          placeholder="Contact Number"
-          value={userContact}
-          onChange={(e) => setUserContact(e.target.value)}
-          required
-          className="w-full border p-3 rounded focus:ring-2 focus:ring-orange-400 outline-none"
-        />
-
-        <div className="grid grid-cols-2 gap-4">
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-            className="border p-3 rounded focus:ring-2 focus:ring-orange-400 outline-none"
-          />
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            required
-            className="border p-3 rounded focus:ring-2 focus:ring-orange-400 outline-none"
-          />
-        </div>
-
-        <select
-          value={service}
-          onChange={(e) => setService(e.target.value)}
-          required
-          className="w-full border p-3 rounded focus:ring-2 focus:ring-orange-400 outline-none"
-        >
-          <option value="">Select Service</option>
-          {serviceOptions.map((srv, idx) => (
-            <option key={idx} value={srv}>{srv}</option>
-          ))}
-        </select>
-
-        <select
-          value={serviceLength}
-          onChange={(e) => setServiceLength(e.target.value)}
-          className="w-full border p-3 rounded focus:ring-2 focus:ring-orange-400 outline-none"
-        >
-          {serviceLengthOptions.map((len, idx) => (
-            <option key={idx} value={len}>{len}</option>
-          ))}
-        </select>
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition font-semibold"
-        >
-          {submitting ? "Submitting..." : "Submit Booking"}
-        </button>
-      </form>
+        Proceed to Booking
+      </button>
     </div>
   );
 }
