@@ -8,6 +8,10 @@ import BrowseProviders from "./Components/BrowseProviders";
 import BookingPage from "./Components/BookingPage";
 import Login from "./Components/pages/Login";
 import Signup from "./Components/pages/Signup";
+import PrivacyPolicy from "./Components/pages/PrivacyPolicy";
+import TermsAndConditions from "./Components/pages/TermsAndConditions";
+import Blogs from "./Components/Blogs";
+
 import Dashboard from "./Components/pages/Dashboard"; 
 import SitterProfile from "./Components/SitterProfile";
 import SitterRequests from "./Components/SitterRequests"; 
@@ -18,7 +22,8 @@ import AdminBookings from "./Components/Admin/Bookings";
 import AdminProviders from "./Components/Admin/Providers";
 import AdminRequests from "./Components/Admin/Requests";
 import AdminUsers from "./Components/Admin/Users";
-
+import CookieConsent from "./Components/CookieConsent";
+import AdminBlogs from "./Components/Admin/Blogs";
 const App = () => {
   // Wrapper to pass providerId from URL param to SitterRequests
   const SitterRequestsWrapper = () => {
@@ -34,11 +39,13 @@ const App = () => {
           {/* Public Routes */}
           <Route path="/" element={<Hero />} />
           <Route path="/sitters" element={<BrowseProviders />} />
-          <Route path="/blogs" element={<div className="p-10">Blogs Coming Soon...</div>} />
+          <Route path="/blogs" element={<Blogs />} />
           <Route path="/request" element={<RequestForm />} />
           <Route path="/join" element={<SitterForm />} />
           <Route path="/book/:id" element={<BookingPage />} />
           <Route path="/book/:id/form" element={<BookingFormPage />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsAndConditions />} />
 
 
           {/* Auth Routes */}
@@ -57,9 +64,11 @@ const App = () => {
           <Route path="/admin/providers" element={<AdminProviders />} />
           <Route path="/admin/requests" element={<AdminRequests />} />
           <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/blogs" element={<AdminBlogs />} />
         </Routes>
       </div>
       <Footer />
+      <CookieConsent />
     </>
   );
 };

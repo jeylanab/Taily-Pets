@@ -51,7 +51,7 @@ export default function Signup() {
   const UPLOAD_PRESET = "Providers";
 
   const serviceOptions = ["Dog Walking", "Pet Sitting", "Pet Boarding"];
-  const petTypeOptions = ["Dog", "Cat", "Bird", "Rabbit"];
+  const petTypeOptions = ["Dog", "Cat", "Bird", "Rabbit", "Other"];
   const areaOptions = ["Nicosia", "Larnaca", "Limassol", "Paphos", "Famagusta"];
   const petSizeOptions = ["Small", "Medium", "Large"];
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

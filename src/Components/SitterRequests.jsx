@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { firestore } from "../Service/firebase";
 import { collection, query, where, onSnapshot, doc, updateDoc } from "firebase/firestore";
-import { FaUser, FaPhone, FaPaw, FaCalendarAlt, FaClock, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import {
+  FaUser,
+  FaPhone,
+  FaPaw,
+  FaCalendarAlt,
+  FaClock,
+  FaCheckCircle,
+  FaTimesCircle
+} from "react-icons/fa";
 
 export default function SitterRequests({ providerId }) {
   const [requests, setRequests] = useState([]);
@@ -15,6 +23,8 @@ export default function SitterRequests({ providerId }) {
       q,
       snapshot => {
         const bookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Sort by createdAt descending (latest requests first)
+        bookings.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds);
         setRequests(bookings);
         setLoading(false);
       },
@@ -60,7 +70,9 @@ export default function SitterRequests({ providerId }) {
               <FaClock className="text-orange-500" /> {req.serviceType} ({req.serviceLength})
             </p>
             <p className="flex items-center gap-2 text-gray-700">
-              <FaCalendarAlt className="text-orange-500" /> {new Date(req.date.seconds * 1000).toLocaleDateString()} at {req.time}
+              <FaCalendarAlt className="text-orange-500" /> 
+              {` From ${new Date(req.fromDate.seconds * 1000).toLocaleDateString()} 
+                 To ${new Date(req.toDate.seconds * 1000).toLocaleDateString()} at ${req.time}`}
             </p>
             <p className="flex items-center gap-2 text-gray-700">
               <span className="font-semibold">Status:</span>

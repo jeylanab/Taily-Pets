@@ -2,7 +2,16 @@ import { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { firestore } from "../Service/firebase";
 import { motion } from "framer-motion";
-import { User, Mail, PawPrint, MapPin, FileText, Check, Clock, Calendar } from "lucide-react";
+import {
+  User,
+  Mail,
+  PawPrint,
+  MapPin,
+  FileText,
+  Check,
+  Clock,
+  Calendar,
+} from "lucide-react";
 import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
@@ -20,17 +29,29 @@ export default function RequestForm() {
   ]);
   const [duration, setDuration] = useState("");
   const [notes, setNotes] = useState("");
+  const [accepted, setAccepted] = useState(false); // ✅ terms checkbox
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const serviceOptions = ["Pet Boarding", "Dog Walking", "Pet Sitting", "Plant Watering"];
-  const petOptions = ["Dog", "Cat", "Bird", "Rabbit"];
+  const serviceOptions = [
+    "Pet Boarding",
+    "Dog Walking",
+    "Pet Sitting",
+    "Plant Watering",
+  ];
+  const petOptions = ["Dog", "Cat", "Bird", "Rabbit", "Other"];
   const areaOptions = ["Nicosia", "Larnaca", "Limassol", "Paphos", "Famagusta"];
   const durationOptions = ["1 Hour", "Half Day", "Full Day"];
   const petSizeOptions = ["Small", "Medium", "Large"];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!accepted) {
+      alert("⚠️ You must accept the Terms & Conditions before submitting.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -53,6 +74,7 @@ export default function RequestForm() {
             },
         notes,
         createdAt: serverTimestamp(),
+        acceptedTerms: true, // ✅ stored in Firestore
       });
 
       setSubmitted(true);
@@ -64,9 +86,12 @@ export default function RequestForm() {
         setPetSize("");
         setArea("");
         setDuration("");
-        setCustomRange([{ startDate: new Date(), endDate: new Date(), key: "selection" }]);
+        setCustomRange([
+          { startDate: new Date(), endDate: new Date(), key: "selection" },
+        ]);
         setUseCustomRange(false);
         setNotes("");
+        setAccepted(false);
         setSubmitted(false);
       }, 2000);
     } catch (err) {
@@ -85,7 +110,9 @@ export default function RequestForm() {
       transition={{ duration: 0.5 }}
       className="max-w-lg mx-auto p-6 bg-white rounded-xl shadow-lg border border-black/20 space-y-4 font-poppins"
     >
-      <h2 className="text-2xl font-bold text-black mb-4 text-center">Request a Sitter</h2>
+      <h2 className="text-2xl font-bold text-black mb-4 text-center">
+        Request a Sitter
+      </h2>
 
       {/* Full Name */}
       <div className="relative">
@@ -124,7 +151,9 @@ export default function RequestForm() {
         >
           <option value="">Select Service Type</option>
           {serviceOptions.map((srv, idx) => (
-            <option key={idx} value={srv}>{srv}</option>
+            <option key={idx} value={srv}>
+              {srv}
+            </option>
           ))}
         </select>
       </div>
@@ -140,7 +169,9 @@ export default function RequestForm() {
         >
           <option value="">Select Pet Type</option>
           {petOptions.map((pet, idx) => (
-            <option key={idx} value={pet}>{pet}</option>
+            <option key={idx} value={pet}>
+              {pet}
+            </option>
           ))}
         </select>
       </div>
@@ -156,7 +187,9 @@ export default function RequestForm() {
         >
           <option value="">Select Pet Size</option>
           {petSizeOptions.map((size, idx) => (
-            <option key={idx} value={size}>{size}</option>
+            <option key={idx} value={size}>
+              {size}
+            </option>
           ))}
         </select>
       </div>
@@ -172,7 +205,9 @@ export default function RequestForm() {
         >
           <option value="">Select Area</option>
           {areaOptions.map((loc, idx) => (
-            <option key={idx} value={loc}>{loc}</option>
+            <option key={idx} value={loc}>
+              {loc}
+            </option>
           ))}
         </select>
       </div>
@@ -220,7 +255,9 @@ export default function RequestForm() {
           >
             <option value="">Select Duration</option>
             {durationOptions.map((d, idx) => (
-              <option key={idx} value={d}>{d}</option>
+              <option key={idx} value={d}>
+                {d}
+              </option>
             ))}
           </select>
         </div>
@@ -238,13 +275,49 @@ export default function RequestForm() {
         />
       </div>
 
+      {/* ✅ Terms & Conditions Checkbox */}
+      <label className="flex items-start gap-2 text-sm text-gray-700">
+        <input
+          type="checkbox"
+          checked={accepted}
+          onChange={(e) => setAccepted(e.target.checked)}
+          className="mt-1 w-4 h-4"
+        />
+        <span>
+          I accept the{" "}
+          <a href="/terms" target="_blank" className="text-orange-500 underline">
+            Terms & Conditions
+          </a>{" "}
+          and{" "}
+          <a
+            href="/privacy"
+            target="_blank"
+            className="text-orange-500 underline"
+          >
+            Privacy Policy
+          </a>
+        </span>
+      </label>
+
       {/* Submit */}
       <button
         type="submit"
-        disabled={loading || submitted}
-        className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition flex items-center justify-center gap-2 font-semibold"
+        disabled={loading || submitted || !accepted}
+        className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 font-semibold text-white ${
+          loading || submitted || !accepted
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-orange-500 hover:bg-orange-600"
+        }`}
       >
-        {loading ? "Submitting..." : submitted ? <><Check size={18} /> Submitted</> : "Submit Request"}
+        {loading
+          ? "Submitting..."
+          : submitted
+          ? (
+            <>
+              <Check size={18} /> Submitted
+            </>
+            )
+          : "Submit Request"}
       </button>
     </motion.form>
   );

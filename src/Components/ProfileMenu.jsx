@@ -105,35 +105,43 @@ const ProfileMenu = ({ user }) => {
             </>
           )}
 
-          {/* Admin Links */}
-          {user.role === "admin" && (
-            <>
-              <button
-                onClick={() => navigate("/admin/bookings")}
-                className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
-              >
-                <BookOpen className="w-4 h-4" /> Manage Bookings
-              </button>
-              <button
-                onClick={() => navigate("/admin/providers")}
-                className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
-              >
-                <PawPrint className="w-4 h-4" /> Manage Providers
-              </button>
-              <button
-                onClick={() => navigate("/admin/requests")}
-                className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
-              >
-                <Mail className="w-4 h-4" /> Manage Requests
-              </button>
-              <button
-                onClick={() => navigate("/admin/users")}
-                className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
-              >
-                <Users className="w-4 h-4" /> Manage Users
-              </button>
-            </>
-          )}
+{/* Admin Links */}
+{user.role === "admin" && (
+  <>
+    <button
+      onClick={() => navigate("/admin/bookings")}
+      className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
+    >
+      <BookOpen className="w-4 h-4" /> Manage Bookings
+    </button>
+    <button
+      onClick={() => navigate("/admin/providers")}
+      className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
+    >
+      <PawPrint className="w-4 h-4" /> Manage Providers
+    </button>
+    <button
+      onClick={() => navigate("/admin/requests")}
+      className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
+    >
+      <Mail className="w-4 h-4" /> Manage Requests
+    </button>
+    <button
+      onClick={() => navigate("/admin/users")}
+      className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
+    >
+      <Users className="w-4 h-4" /> Manage Users
+    </button>
+    {/* ✅ New Manage Blogs section */}
+    <button
+      onClick={() => navigate("/admin/blogs")}
+      className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
+    >
+      <BookOpen className="w-4 h-4 text-purple-500" /> Manage Blogs
+    </button>
+  </>
+)}
+
 
           {/* Logout */}
           <button
