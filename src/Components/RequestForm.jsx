@@ -29,7 +29,7 @@ export default function RequestForm() {
   ]);
   const [duration, setDuration] = useState("");
   const [notes, setNotes] = useState("");
-  const [accepted, setAccepted] = useState(false); // ✅ terms checkbox
+  const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -74,7 +74,7 @@ export default function RequestForm() {
             },
         notes,
         createdAt: serverTimestamp(),
-        acceptedTerms: true, // ✅ stored in Firestore
+        acceptedTerms: true,
       });
 
       setSubmitted(true);
@@ -102,6 +102,14 @@ export default function RequestForm() {
     setLoading(false);
   };
 
+  // Reusable input wrapper with icon
+  const InputWrapper = ({ icon: Icon, children }) => (
+    <div className="flex items-center border border-black/20 rounded-lg focus-within:ring-2 focus-within:ring-orange-400 bg-white">
+      <Icon className="ml-3 text-orange-500 flex-shrink-0" size={20} />
+      {children}
+    </div>
+  );
+
   return (
     <motion.form
       onSubmit={handleSubmit}
@@ -115,39 +123,36 @@ export default function RequestForm() {
       </h2>
 
       {/* Full Name */}
-      <div className="relative">
-        <User className="absolute left-3 top-3 text-orange-500" size={20} />
+      <InputWrapper icon={User}>
         <input
           type="text"
           placeholder="Full Name"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           required
-          className="w-full pl-10 p-3 border border-black/20 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none transition"
+          className="w-full p-3 outline-none rounded-r-lg text-sm sm:text-base"
         />
-      </div>
+      </InputWrapper>
 
       {/* Email */}
-      <div className="relative">
-        <Mail className="absolute left-3 top-3 text-orange-500" size={20} />
+      <InputWrapper icon={Mail}>
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full pl-10 p-3 border border-black/20 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none transition"
+          className="w-full p-3 outline-none rounded-r-lg text-sm sm:text-base"
         />
-      </div>
+      </InputWrapper>
 
       {/* Service Type */}
-      <div className="relative">
-        <PawPrint className="absolute left-3 top-3 text-orange-500" size={20} />
+      <InputWrapper icon={PawPrint}>
         <select
           value={serviceType}
           onChange={(e) => setServiceType(e.target.value)}
           required
-          className="w-full pl-10 p-3 border border-black/20 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none transition bg-white"
+          className="w-full p-3 outline-none rounded-r-lg text-sm sm:text-base bg-white"
         >
           <option value="">Select Service Type</option>
           {serviceOptions.map((srv, idx) => (
@@ -156,16 +161,15 @@ export default function RequestForm() {
             </option>
           ))}
         </select>
-      </div>
+      </InputWrapper>
 
       {/* Pet Type */}
-      <div className="relative">
-        <PawPrint className="absolute left-3 top-3 text-orange-500" size={20} />
+      <InputWrapper icon={PawPrint}>
         <select
           value={petType}
           onChange={(e) => setPetType(e.target.value)}
           required
-          className="w-full pl-10 p-3 border border-black/20 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none transition bg-white"
+          className="w-full p-3 outline-none rounded-r-lg text-sm sm:text-base bg-white"
         >
           <option value="">Select Pet Type</option>
           {petOptions.map((pet, idx) => (
@@ -174,16 +178,15 @@ export default function RequestForm() {
             </option>
           ))}
         </select>
-      </div>
+      </InputWrapper>
 
       {/* Pet Size */}
-      <div className="relative">
-        <PawPrint className="absolute left-3 top-3 text-orange-500" size={20} />
+      <InputWrapper icon={PawPrint}>
         <select
           value={petSize}
           onChange={(e) => setPetSize(e.target.value)}
           required
-          className="w-full pl-10 p-3 border border-black/20 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none transition bg-white"
+          className="w-full p-3 outline-none rounded-r-lg text-sm sm:text-base bg-white"
         >
           <option value="">Select Pet Size</option>
           {petSizeOptions.map((size, idx) => (
@@ -192,16 +195,15 @@ export default function RequestForm() {
             </option>
           ))}
         </select>
-      </div>
+      </InputWrapper>
 
       {/* Area */}
-      <div className="relative">
-        <MapPin className="absolute left-3 top-3 text-orange-500" size={20} />
+      <InputWrapper icon={MapPin}>
         <select
           value={area}
           onChange={(e) => setArea(e.target.value)}
           required
-          className="w-full pl-10 p-3 border border-black/20 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none transition bg-white"
+          className="w-full p-3 outline-none rounded-r-lg text-sm sm:text-base bg-white"
         >
           <option value="">Select Area</option>
           {areaOptions.map((loc, idx) => (
@@ -210,10 +212,10 @@ export default function RequestForm() {
             </option>
           ))}
         </select>
-      </div>
+      </InputWrapper>
 
       {/* Toggle: Custom Range or Duration */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <label className="flex items-center gap-1">
           <input
             type="radio"
@@ -234,24 +236,26 @@ export default function RequestForm() {
 
       {/* Duration or Date Picker */}
       {useCustomRange ? (
-        <div className="relative">
-          <Calendar className="absolute left-3 top-3 text-orange-500" size={20} />
+        <div>
+          <div className="flex items-center mb-2">
+            <Calendar className="mr-2 text-orange-500" size={20} />
+            <span className="text-sm font-medium">Select Date Range</span>
+          </div>
           <DateRange
             editableDateInputs={true}
             onChange={(item) => setCustomRange([item.selection])}
             moveRangeOnFirstSelection={false}
             ranges={customRange}
-            className="mt-2"
+            className="w-full"
           />
         </div>
       ) : (
-        <div className="relative">
-          <Clock className="absolute left-3 top-3 text-orange-500" size={20} />
+        <InputWrapper icon={Clock}>
           <select
             value={duration}
             onChange={(e) => setDuration(e.target.value)}
             required
-            className="w-full pl-10 p-3 border border-black/20 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none transition bg-white"
+            className="w-full p-3 outline-none rounded-r-lg text-sm sm:text-base bg-white"
           >
             <option value="">Select Duration</option>
             {durationOptions.map((d, idx) => (
@@ -260,22 +264,21 @@ export default function RequestForm() {
               </option>
             ))}
           </select>
-        </div>
+        </InputWrapper>
       )}
 
       {/* Notes */}
-      <div className="relative">
-        <FileText className="absolute left-3 top-3 text-orange-500" size={20} />
+      <InputWrapper icon={FileText}>
         <textarea
           placeholder="Additional Notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={4}
-          className="w-full pl-10 p-3 border border-black/20 rounded-lg focus:ring-2 focus:ring-orange-400 outline-none transition"
+          className="w-full p-3 outline-none rounded-r-lg text-sm sm:text-base"
         />
-      </div>
+      </InputWrapper>
 
-      {/* ✅ Terms & Conditions Checkbox */}
+      {/* Terms & Conditions */}
       <label className="flex items-start gap-2 text-sm text-gray-700">
         <input
           type="checkbox"
@@ -289,11 +292,7 @@ export default function RequestForm() {
             Terms & Conditions
           </a>{" "}
           and{" "}
-          <a
-            href="/privacy"
-            target="_blank"
-            className="text-orange-500 underline"
-          >
+          <a href="/privacy" target="_blank" className="text-orange-500 underline">
             Privacy Policy
           </a>
         </span>
