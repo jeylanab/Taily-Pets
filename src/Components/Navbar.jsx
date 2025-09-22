@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { auth, firestore } from "../Service/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import ProfileMenu from "./ProfileMenu";
-import logo from "../assets/logo.png";
+import logo from "../assets/logoe.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -40,7 +40,7 @@ const Navbar = () => {
         <div className="flex justify-between items-center bg-white rounded-2xl shadow-md px-6 py-3">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <img src={logo} alt="Taily Logo" className="h-8 w-auto" />
+            <img src={logo} alt="Taily Logo" className="h-12 w-auto" />
             <span className="text-xl font-semibold text-gray-800">Taily</span>
           </Link>
 
